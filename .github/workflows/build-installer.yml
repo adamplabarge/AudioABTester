@@ -1,0 +1,50 @@
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore AudioABTester.sln
+
+      - name: Publish app
+        run: dotnet publish AudioABTester/AudioABTester.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o installer/publish
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            throw "ISCC.exe not found at $iscc"
+          }
+          & $iscc "installer/AudioABTester.iss"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioABTester-installer
+          path: installer/output/*.exe
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioABTester-publish
+          path: installer/publish/**

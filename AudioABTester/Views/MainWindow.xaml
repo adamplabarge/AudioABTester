@@ -1,0 +1,341 @@
+<Window x:Class="AudioABTester.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="AudioABTester"
+        Width="980"
+        Height="620"
+        MinWidth="840"
+        MinHeight="520"
+        Background="{DynamicResource WindowBackgroundBrush}">
+  <Window.InputBindings>
+    <KeyBinding Key="Space" Command="{Binding TogglePlayPauseCommand}" />
+    <KeyBinding Key="X" Command="{Binding ToggleSourceCommand}" />
+    <KeyBinding Key="Left" Command="{Binding SeekBackwardCommand}" />
+    <KeyBinding Key="Right" Command="{Binding SeekForwardCommand}" />
+  </Window.InputBindings>
+
+  <Window.Resources>
+    <Style x:Key="CardBorderStyle" TargetType="Border">
+      <Setter Property="CornerRadius" Value="22" />
+      <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource PanelTextBrush}" />
+      <Setter Property="Background" Value="{DynamicResource ButtonFillBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="18,10" />
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Root"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="14"
+                    SnapsToDevicePixels="True">
+              <ContentPresenter HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="{TemplateBinding Padding}" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ButtonHoverBrush}" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ButtonPressedBrush}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+      <Setter Property="Foreground" Value="#081019" />
+    </Style>
+
+    <Style x:Key="SourceButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Path=Tag, RelativeSource={RelativeSource Self}}" Value="Selected">
+          <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+          <Setter Property="Foreground" Value="#081019" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.Background>
+      <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0E1219" Offset="0" />
+        <GradientStop Color="#151B25" Offset="0.55" />
+        <GradientStop Color="#10151D" Offset="1" />
+      </LinearGradientBrush>
+    </Grid.Background>
+
+    <Border Margin="24" Style="{StaticResource CardBorderStyle}">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,18">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <TextBlock Text="Audio A"
+                     Foreground="{DynamicResource PanelTextBrush}"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+
+          <TextBlock Grid.Column="1"
+                     Margin="18,0,0,0"
+                     Text="Load two files, start once, then flip between sources without interrupting playback."
+                     Foreground="{DynamicResource PanelMutedBrush}"
+                     VerticalAlignment="Center"
+                     TextWrapping="Wrap" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="140" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <Button Grid.Column="0"
+                  Style="{StaticResource PrimaryButtonStyle}"
+                  Command="{Binding LoadFileACommand}"
+                  Content="Load A" />
+
+          <Border Grid.Column="2"
+                  Padding="16,12"
+                  CornerRadius="14"
+                  Background="#141A23"
+                  BorderBrush="#242D3C"
+                  BorderThickness="1">
+            <TextBlock Text="{Binding FileAName}"
+                       Foreground="{DynamicResource PanelTextBrush}"
+                       FontSize="14"
+                       TextTrimming="CharacterEllipsis" />
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,24">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="140" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <Button Grid.Column="0"
+                  Style="{StaticResource PrimaryButtonStyle}"
+                  Command="{Binding LoadFileBCommand}"
+                  Content="Load B" />
+
+          <Border Grid.Column="2"
+                  Padding="16,12"
+                  CornerRadius="14"
+                  Background="#141A23"
+                  BorderBrush="#242D3C"
+                  BorderThickness="1">
+            <TextBlock Text="{Binding FileBName}"
+                       Foreground="{DynamicResource PanelTextBrush}"
+                       FontSize="14"
+                       TextTrimming="CharacterEllipsis" />
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="3" Margin="0,0,0,24">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <Border Grid.Column="0"
+                  CornerRadius="18"
+                  Background="#141A23"
+                  BorderBrush="#242D3C"
+                  BorderThickness="1"
+                  Padding="18">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <TextBlock Text="Playback"
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         FontSize="13"
+                         Margin="0,0,0,14" />
+
+              <StackPanel Grid.Row="1"
+                          Orientation="Horizontal">
+                <Button Style="{StaticResource AccentButtonStyle}"
+                        Command="{Binding StartCommand}"
+                        Content="Start"
+                        Margin="0,0,10,0" />
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding PauseCommand}"
+                        Content="Pause"
+                        Margin="0,0,10,0" />
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding StopCommand}"
+                        Content="Stop" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Grid.Column="2"
+                  CornerRadius="18"
+                  Background="#141A23"
+                  BorderBrush="#242D3C"
+                  BorderThickness="1"
+                  Padding="18">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <TextBlock Text="Comparison"
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         FontSize="13"
+                         Margin="0,0,0,14" />
+
+              <StackPanel Grid.Row="1"
+                          Orientation="Horizontal">
+                <Button Command="{Binding ListenACommand}"
+                        Content="Listen A"
+                        Margin="0,0,10,0">
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SourceButtonStyle}">
+                      <Setter Property="Tag" Value="" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsListeningToA}" Value="True">
+                          <Setter Property="Tag" Value="Selected" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <Button Command="{Binding ListenBCommand}"
+                        Content="Listen B">
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SourceButtonStyle}">
+                      <Setter Property="Tag" Value="" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsListeningToB}" Value="True">
+                          <Setter Property="Tag" Value="Selected" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <Border Grid.Row="4"
+                CornerRadius="18"
+                Background="#111721"
+                BorderBrush="#242D3C"
+                BorderThickness="1"
+                Padding="20">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+
+              <TextBlock Text="{Binding CurrentSourceText}"
+                         Foreground="{DynamicResource PanelTextBrush}"
+                         FontSize="22"
+                         FontWeight="SemiBold" />
+
+              <TextBlock Grid.Column="1"
+                         Text="{Binding PlaybackTime}"
+                         Foreground="{DynamicResource PanelTextBrush}"
+                         FontSize="20"
+                         FontWeight="SemiBold"
+                         HorizontalAlignment="Right" />
+            </Grid>
+
+            <Slider Grid.Row="1"
+                    Margin="0,18,0,14"
+                    Minimum="0"
+                    Maximum="{Binding DurationSeconds}"
+                    Value="{Binding PositionSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    IsMoveToPointEnabled="True"
+                    TickPlacement="None"
+                    SmallChange="1"
+                    LargeChange="5" />
+
+            <Grid Grid.Row="2">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+
+              <TextBlock Text="Space: Play/Pause   X: Toggle A/B"
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         FontSize="13" />
+
+              <TextBlock Grid.Column="1"
+                         Text="Left/Right: -/+ 5 sec"
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         FontSize="13" />
+            </Grid>
+
+            <Border Grid.Row="3"
+                    Margin="0,22,0,0"
+                    CornerRadius="16"
+                    Background="#151D28"
+                    BorderBrush="#242D3C"
+                    BorderThickness="1"
+                    Padding="16">
+              <TextBlock Text="Both files are decoded to a shared PCM format and rendered through one WASAPI output path so A/B switching changes gain only, not playback state."
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         TextWrapping="Wrap" />
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
