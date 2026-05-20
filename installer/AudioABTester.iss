@@ -5,7 +5,7 @@
 
 #define MyAppName "AudioABTester"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "AudioABTester"
+#define MyAppPublisher "Adam LaBarge"
 #define MyAppExeName "AudioABTester.exe"
 
 [Setup]

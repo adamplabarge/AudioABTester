@@ -110,3 +110,9 @@ The workflow uses `windows-latest`, installs .NET 8 SDK, installs Inno Setup via
 - The current design is ready for blind A/B/X workflows because the transport and source-selection logic are already separated.
 - Waveform rendering, loudness matching, markers, and playlist support can be layered on top of the existing engine and view-model boundaries.
 - This repository was generated without local `dotnet` validation because the current environment does not have the .NET SDK installed.
+
+## Open Source
+
+- License: MIT (see `LICENSE`)
+- Contributions: see `CONTRIBUTING.md`
+- Community expectations: see `CODE_OF_CONDUCT.md`
