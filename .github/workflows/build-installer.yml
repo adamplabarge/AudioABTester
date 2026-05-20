@@ -22,8 +22,19 @@ jobs:
       - name: Restore
         run: dotnet restore AudioABTester.sln
 
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $ver = "${{ github.ref_name }}" -replace '^v', ''
+          } else {
+            $ver = "0.0.0-dev"
+          }
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Publish app
-        run: dotnet publish AudioABTester/AudioABTester.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o installer/publish
+        run: dotnet publish AudioABTester/AudioABTester.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o installer/publish
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
@@ -35,12 +46,12 @@ jobs:
           if (-not (Test-Path $iscc)) {
             throw "ISCC.exe not found at $iscc"
           }
-          & $iscc "installer/AudioABTester.iss"
+          & $iscc "/DMyAppVersion=${{ steps.version.outputs.VERSION }}" "installer/AudioABTester.iss"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AudioABTester-installer
+          name: AudioABTester-installer-${{ steps.version.outputs.VERSION }}
           path: installer/output/*.exe
 
       - name: Upload publish artifact

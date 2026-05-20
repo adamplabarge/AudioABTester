@@ -270,7 +270,9 @@ public sealed class AudioEngine : IDisposable
 
     private static void WriteDebugLine(string line)
     {
-        var logPath = Path.Combine(AppContext.BaseDirectory, "AudioABTester-debug.log");
+        var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AudioABTester");
+        Directory.CreateDirectory(logDir);
+        var logPath = Path.Combine(logDir, "AudioABTester-debug.log");
         File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss}] {line}{Environment.NewLine}");
     }
 
