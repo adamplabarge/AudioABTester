@@ -2,6 +2,10 @@
 
 AudioABTester is a Windows 11 desktop app for critical A/B listening. It loads two audio files, decodes both into a shared PCM format, starts them on the same timeline, and switches between A and B by changing gain only. Playback does not restart during comparison.
 
+## Screenshot
+
+![AudioABTester screenshot](screenshot-v1.0.1.png)
+
 ## Stack
 
 - C#
