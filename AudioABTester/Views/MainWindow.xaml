@@ -6,9 +6,9 @@
         mc:Ignorable="d"
         Title="AudioABTester"
         Width="980"
-        Height="620"
+        Height="974"
         MinWidth="840"
-        MinHeight="520"
+        MinHeight="743"
         Background="{DynamicResource WindowBackgroundBrush}">
   <Window.InputBindings>
     <KeyBinding Key="Space" Command="{Binding TogglePlayPauseCommand}" />
@@ -18,6 +18,8 @@
   </Window.InputBindings>
 
   <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
     <Style x:Key="CardBorderStyle" TargetType="Border">
       <Setter Property="CornerRadius" Value="22" />
       <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
@@ -79,6 +81,24 @@
         </DataTrigger>
       </Style.Triggers>
     </Style>
+
+    <Style x:Key="ModeToggleButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Path=Tag, RelativeSource={RelativeSource Self}}" Value="Selected">
+          <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+          <Setter Property="Foreground" Value="#081019" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="OutputRadioButtonStyle" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource PanelTextBrush}" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
   </Window.Resources>
 
   <Grid>
@@ -100,27 +120,65 @@
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,18">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
+        <Border Grid.Row="0"
+                Margin="0,0,0,18"
+                CornerRadius="14"
+                Background="#141A23"
+                BorderBrush="#242D3C"
+                BorderThickness="1"
+                Padding="16">
+          <StackPanel>
+            <TextBlock Text="Audio A/B"
+                       Foreground="{DynamicResource PanelTextBrush}"
+                       FontSize="24"
+                       FontWeight="SemiBold" />
 
-          <TextBlock Text="Audio A"
-                     Foreground="{DynamicResource PanelTextBrush}"
-                     FontSize="24"
-                     FontWeight="SemiBold"
-                     VerticalAlignment="Center" />
+            <TextBlock Margin="0,8,0,0"
+                       Text="Choose your test mode first. In blind mode, A/B are randomized and file names stay hidden until reveal."
+                       Foreground="{DynamicResource PanelMutedBrush}"
+                       TextWrapping="Wrap" />
 
-          <TextBlock Grid.Column="1"
-                     Margin="18,0,0,0"
-                     Text="Load two files, start once, then flip between sources without interrupting playback."
-                     Foreground="{DynamicResource PanelMutedBrush}"
-                     VerticalAlignment="Center"
-                     TextWrapping="Wrap" />
-        </Grid>
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,14,0,0">
+              <Button Command="{Binding SelectBlindYesCommand}"
+                      Content="Yes, Blind Test"
+                      Margin="0,0,10,0">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource ModeToggleButtonStyle}">
+                    <Setter Property="Tag" Value="" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsBlindTestSelected}" Value="True">
+                        <Setter Property="Tag" Value="Selected" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+                    <Button Command="{Binding SelectBlindNoCommand}"
+                      Content="No, Standard Test">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource ModeToggleButtonStyle}">
+                    <Setter Property="Tag" Value="" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStandardTestSelected}" Value="True">
+                        <Setter Property="Tag" Value="Selected" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+            </StackPanel>
 
-        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <TextBlock Margin="0,10,0,0"
+                       Text="Switching test modes resets loaded files and clears blind randomization."
+                       Foreground="{DynamicResource PanelMutedBrush}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,0,0,12"
+              Visibility="{Binding ShowMainWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="140" />
             <ColumnDefinition Width="16" />
@@ -130,7 +188,7 @@
           <Button Grid.Column="0"
                   Style="{StaticResource PrimaryButtonStyle}"
                   Command="{Binding LoadFileACommand}"
-                  Content="Load A" />
+                  Content="{Binding LoadFileAButtonText}" />
 
           <Border Grid.Column="2"
                   Padding="16,12"
@@ -138,14 +196,16 @@
                   Background="#141A23"
                   BorderBrush="#242D3C"
                   BorderThickness="1">
-            <TextBlock Text="{Binding FileAName}"
+            <TextBlock Text="{Binding FileANameDisplay}"
                        Foreground="{DynamicResource PanelTextBrush}"
                        FontSize="14"
                        TextTrimming="CharacterEllipsis" />
           </Border>
         </Grid>
 
-        <Grid Grid.Row="2" Margin="0,0,0,24">
+          <Grid Grid.Row="2"
+            Margin="0,0,0,24"
+            Visibility="{Binding ShowMainWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="140" />
             <ColumnDefinition Width="16" />
@@ -155,7 +215,7 @@
           <Button Grid.Column="0"
                   Style="{StaticResource PrimaryButtonStyle}"
                   Command="{Binding LoadFileBCommand}"
-                  Content="Load B" />
+              Content="{Binding LoadFileBButtonText}" />
 
           <Border Grid.Column="2"
                   Padding="16,12"
@@ -163,14 +223,16 @@
                   Background="#141A23"
                   BorderBrush="#242D3C"
                   BorderThickness="1">
-            <TextBlock Text="{Binding FileBName}"
+            <TextBlock Text="{Binding FileBNameDisplay}"
                        Foreground="{DynamicResource PanelTextBrush}"
                        FontSize="14"
                        TextTrimming="CharacterEllipsis" />
           </Border>
         </Grid>
 
-        <Grid Grid.Row="3" Margin="0,0,0,24">
+          <Grid Grid.Row="3"
+            Margin="0,0,0,24"
+            Visibility="{Binding ShowMainWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="20" />
@@ -185,6 +247,8 @@
                   Padding="18">
             <Grid>
               <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
@@ -208,6 +272,59 @@
                         Command="{Binding StopCommand}"
                         Content="Stop" />
               </StackPanel>
+
+              <TextBlock Grid.Row="2"
+                         Text="Audio Output"
+                         Foreground="{DynamicResource PanelMutedBrush}"
+                         FontSize="13"
+                         Margin="0,16,0,8" />
+
+              <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="12" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Background="#141A23"
+                        BorderBrush="#242D3C"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="10,8"
+                        MinHeight="74">
+                  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                MaxHeight="120">
+                    <ListBox Background="Transparent"
+                             BorderThickness="0"
+                             ItemsSource="{Binding OutputDevices}"
+                             SelectedValuePath="Id"
+                             SelectedValue="{Binding SelectedOutputDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                      <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                          <Setter Property="Padding" Value="0" />
+                          <Setter Property="Margin" Value="0" />
+                          <Setter Property="Background" Value="Transparent" />
+                          <Setter Property="BorderThickness" Value="0" />
+                          <Setter Property="Focusable" Value="False" />
+                        </Style>
+                      </ListBox.ItemContainerStyle>
+                      <ListBox.ItemTemplate>
+                        <DataTemplate>
+                          <RadioButton Style="{StaticResource OutputRadioButtonStyle}"
+                                       Content="{Binding Name}"
+                                       IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected, Mode=TwoWay}" />
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                  </ScrollViewer>
+                </Border>
+
+                <Button Grid.Column="2"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding RefreshOutputDevicesCommand}"
+                        Content="Refresh" />
+              </Grid>
             </Grid>
           </Border>
 
@@ -221,9 +338,10 @@
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
-              <TextBlock Text="Comparison"
+              <TextBlock Text="{Binding ComparisonPanelTitle}"
                          Foreground="{DynamicResource PanelMutedBrush}"
                          FontSize="13"
                          Margin="0,0,0,14" />
@@ -259,6 +377,26 @@
                   </Button.Style>
                 </Button>
               </StackPanel>
+
+                <Grid Grid.Row="2"
+                  Margin="0,12,0,0">
+                  <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+
+                <Button Style="{StaticResource AccentButtonStyle}"
+                        Command="{Binding RevealBlindMappingCommand}"
+                        Content="Reveal A/B Mapping"
+                        Visibility="{Binding ShowRevealButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                  <Button Grid.Row="1"
+                  Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding ResetBlindRoundCommand}"
+                        Content="Reset Blind Round"
+                  Margin="0,10,0,0"
+                        Visibility="{Binding IsBlindTestSelected, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
             </Grid>
           </Border>
         </Grid>
@@ -268,7 +406,8 @@
                 Background="#111721"
                 BorderBrush="#242D3C"
                 BorderThickness="1"
-                Padding="20">
+                Padding="20"
+                Visibility="{Binding ShowMainWorkflow, Converter={StaticResource BoolToVisibilityConverter}}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -312,7 +451,7 @@
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
 
-              <TextBlock Text="Space: Play/Pause   X: Toggle A/B"
+              <TextBlock Text="{Binding ToggleHintText}"
                          Foreground="{DynamicResource PanelMutedBrush}"
                          FontSize="13" />
 
@@ -329,9 +468,15 @@
                     BorderBrush="#242D3C"
                     BorderThickness="1"
                     Padding="16">
-              <TextBlock Text="Both files are decoded to a shared PCM format and rendered through one WASAPI output path so A/B switching changes gain only, not playback state."
-                         Foreground="{DynamicResource PanelMutedBrush}"
-                         TextWrapping="Wrap" />
+              <StackPanel>
+                <TextBlock Text="{Binding BlindStatusText}"
+                           Foreground="{DynamicResource PanelMutedBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding OutputDeviceStatus}"
+                           Foreground="{DynamicResource PanelMutedBrush}"
+                           Margin="0,8,0,0"
+                           TextWrapping="Wrap" />
+              </StackPanel>
             </Border>
           </Grid>
         </Border>

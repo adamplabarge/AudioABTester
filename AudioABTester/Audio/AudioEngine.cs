@@ -13,11 +13,14 @@ public enum PlaybackSource
     B
 }
 
+public sealed record AudioOutputDevice(string Id, string Name, bool IsDefault);
+
 public sealed class AudioEngine : IDisposable
 {
     private readonly object _syncRoot = new();
-    private readonly MMDevice _outputDevice;
-    private readonly WasapiOut _output;
+    private readonly MMDeviceEnumerator _deviceEnumerator;
+    private MMDevice _outputDevice;
+    private WasapiOut _output;
     private readonly SynchronizedAbSampleProvider _sampleProvider;
     private readonly VolumeMatchService _volumeMatchService;
 
@@ -29,8 +32,8 @@ public sealed class AudioEngine : IDisposable
     {
         _volumeMatchService = volumeMatchService;
 
-        using var enumerator = new MMDeviceEnumerator();
-        _outputDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+        _deviceEnumerator = new MMDeviceEnumerator();
+        _outputDevice = _deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
 
         var mixFormat = _outputDevice.AudioClient.MixFormat;
         // Use a stable internal stereo mix format, then let WASAPI shared mode handle endpoint conversion.
@@ -42,9 +45,7 @@ public sealed class AudioEngine : IDisposable
         // One output device and one provider chain ensures the two sources share a single hardware clock.
         // That prevents long-term drift that would happen with independent WasapiOut instances.
         _sampleProvider = new SynchronizedAbSampleProvider(this);
-        _output = new WasapiOut(_outputDevice, AudioClientShareMode.Shared, true, 20);
-        // Emit 16-bit PCM to avoid device-specific float-format interpretation issues.
-        _output.Init(new SampleToWaveProvider16(_sampleProvider));
+        _output = CreateOutput(_outputDevice);
     }
 
     public WaveFormat OutputFormat { get; }
@@ -54,6 +55,10 @@ public sealed class AudioEngine : IDisposable
     public AudioTrack? TrackB { get; private set; }
 
     public PlaybackSource CurrentSource { get; private set; } = PlaybackSource.A;
+
+    public string CurrentOutputDeviceId => _outputDevice.ID;
+
+    public string CurrentOutputDeviceName => _outputDevice.FriendlyName;
 
     public bool CanStart => TrackA is not null && TrackB is not null;
 
@@ -158,6 +163,21 @@ public sealed class AudioEngine : IDisposable
         }
     }
 
+    public void ClearTracks()
+    {
+        _output.Stop();
+
+        lock (_syncRoot)
+        {
+            TrackA = null;
+            TrackB = null;
+            CurrentSource = PlaybackSource.A;
+            _framePosition = 0;
+            _trimGainA = 1f;
+            _trimGainB = 1f;
+        }
+    }
+
     public void Seek(TimeSpan position)
     {
         lock (_syncRoot)
@@ -195,10 +215,58 @@ public sealed class AudioEngine : IDisposable
         }
     }
 
+    public IReadOnlyList<AudioOutputDevice> GetOutputDevices()
+    {
+        var result = new List<AudioOutputDevice>();
+        var defaultDeviceId = _deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia).ID;
+        var devices = _deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+
+        foreach (var device in devices)
+        {
+            result.Add(new AudioOutputDevice(device.ID, device.FriendlyName, device.ID == defaultDeviceId));
+        }
+
+        return result;
+    }
+
+    public void SetOutputDevice(string deviceId)
+    {
+        var devices = _deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+        var selected = devices.FirstOrDefault(d => string.Equals(d.ID, deviceId, StringComparison.Ordinal));
+        if (selected is null)
+        {
+            return;
+        }
+
+        var wasPlaying = _output.PlaybackState == PlaybackState.Playing;
+        _output.Stop();
+        _output.Dispose();
+        _outputDevice.Dispose();
+
+        _outputDevice = selected;
+        _output = CreateOutput(_outputDevice);
+
+        WriteDebugLine($"Output device switched to: {_outputDevice.FriendlyName}");
+
+        if (wasPlaying && CanStart)
+        {
+            _output.Play();
+        }
+    }
+
     public void Dispose()
     {
         _output.Dispose();
         _outputDevice.Dispose();
+        _deviceEnumerator.Dispose();
+    }
+
+    private WasapiOut CreateOutput(MMDevice device)
+    {
+        var output = new WasapiOut(device, AudioClientShareMode.Shared, true, 20);
+        // Emit 16-bit PCM to avoid device-specific float-format interpretation issues.
+        output.Init(new SampleToWaveProvider16(_sampleProvider));
+        return output;
     }
 
     private void RecalculateTrimGainsUnsafe()
