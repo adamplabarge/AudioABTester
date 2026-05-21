@@ -4,7 +4,7 @@ AudioABTester is a Windows 11 desktop app for critical A/B listening. It loads t
 
 ## Screenshot
 
-![AudioABTester screenshot](screenshot-v1.0.1.png)
+![AudioABTester screenshot](screenshot-v1.1.0.png)
 
 ## Quick Start
 

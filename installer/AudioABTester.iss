@@ -5,7 +5,7 @@
 
 #define MyAppName "AudioABTester"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.1.0"
 #endif
 #define MyAppPublisher "Adam LaBarge"
 #define MyAppExeName "AudioABTester.exe"
